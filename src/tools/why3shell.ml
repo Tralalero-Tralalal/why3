@@ -57,7 +57,7 @@ module Protocol_shell = struct
     Debug.dprintf debug_proto "@.";
     notification_list := n :: !notification_list
 
-  let get_notified () =
+  let get_notified () : Why3.Itp_communication.notification list =
     if List.length !notification_list > 0 then
       Debug.dprintf debug_proto "get notified@.";
     let l = List.rev !notification_list in
@@ -216,6 +216,7 @@ let return_proof_info (t: node_type) =
     Some Controller_itp.Scheduled
   | _ -> None
 
+(*Increases max ID*)
 let add_new_node fmt (n: node_ID) (parent: node_ID) (t: node_type) (name: string) =
   if t = NRoot then () else
   let new_node = {
@@ -315,7 +316,7 @@ let treat_notification fmt n =
       Not_found -> fprintf fmt "Could not find node %d@." id
 
 let additional_help = "Additionally for shell:\n\
-                       goto n -> focuse on n\n\
+                       goto n -> focus on n\n\
                        ng -> next node\n\
                        g -> print the current task\n\
                        gf -> print the current task with full context\n\
@@ -332,12 +333,27 @@ let interp fmt cmd =
   let l = Re.Str.split (Re.Str.regexp " ") cmd in
   begin
     match l with
-    | ["goto"; n] when int_of_string n < !max_ID ->
+    | ["goto"; n] ->
+      begin
+      try
+        if int_of_string n < !max_ID then begin
         cur_id := int_of_string n;
         let c = false (* TODO *) in
         let show_uses_clones_metas = false (* TODO *) in
         send_request (Get_task(!cur_id,c,show_uses_clones_metas,false));
         print_session fmt
+            end
+        else
+            Printf.printf "Input exceeded max ID\n";
+      with
+        | Failure msg -> 
+          Printf.printf "Error: Could not convert '%s' to a number (%s). Please input a valid integer.\n" n msg;
+        | _ -> 
+          Printf.printf "An unexpected error occurred while parsing '%s'.\n" n;
+        end
+    | "goto" :: _ -> (* Catches "goto" with too few or too many arguments *)
+       Printf.printf "Error: 'goto' command takes exactly one integer argument. Usage: goto <ID>\n";
+       print_session fmt
     | _ ->
         begin
           match cmd with
@@ -398,8 +414,10 @@ let () =
   in
   Server.init_server config env dir;
   Unix_scheduler.timeout ~ms:100
+      (*a function that iterates over a list of notifications, applying treat_notification, returns true*) 
     (fun () -> List.iter
-        (fun n -> treat_notification fmt n) (get_notified ()); true);
+        (fun n -> treat_notification fmt n) (get_notified ()); 
+        true);
   Unix_scheduler.main_loop (interp fmt)
 
 end
