@@ -1,0 +1,12 @@
+theory HelloProof
+
+  goal G1: true
+
+  goal G2: (true -> false) /\ (true \/ false)
+
+  use int.Int
+
+  goal G3: forall x:int. x * x >= 0
+  
+  goal G4: true
+end

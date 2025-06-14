@@ -396,6 +396,7 @@ let () =
       eprintf "Error: %s@." s;
       Whyconf.Args.exit_with_usage usage_str
   in
+    print_string dir;
   Server.init_server config env dir;
   Unix_scheduler.timeout ~ms:100
     (fun () -> List.iter

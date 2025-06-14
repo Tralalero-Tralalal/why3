@@ -10,7 +10,7 @@
 
 (** Hashtables with weak key used for memoization *)
 
-type tag
+type tag = int
 
 val dummy_tag : tag
 

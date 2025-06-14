@@ -59,6 +59,13 @@ type prover =
     }
 (* END{provertype} anchor for automatic documentation, do not remove *)
 
+let _print_prover (pr : prover) = 
+  Printf.printf "prover: \n";
+  Printf.printf " prover_name: %s\n" pr.prover_name;
+  Printf.printf " prover_version: %s\n" pr.prover_version;
+  Printf.printf " prover_altern: %s\n" pr.prover_altern;
+  ()
+
 let print_altern fmt s =
   if s <> "" then Format.fprintf fmt " (%s)" s
 
@@ -154,6 +161,48 @@ type config_strategy = {
   strategy_code : string;
   strategy_shortcut : string;
 }
+
+(* --- Printer for config_prover --- *)
+let print_config_prover (config : config_prover) : unit =
+  Printf.printf "--- Prover Configuration ---\n";
+  Printf.printf "  prover: \n"; _print_prover config.prover;
+  Printf.printf "  command: %s\n" config.command;
+  Printf.printf "  command_steps: %s\n"
+    (match config.command_steps with
+     | Some s -> Printf.sprintf "Some(\"%s\")" s
+     | None -> "None");
+  Printf.printf "  driver: (%s, \"%s\")\n"
+    (match fst config.driver with
+     | Some s -> Printf.sprintf "Some(\"%s\")" s
+     | None -> "None")
+    (snd config.driver);
+  Printf.printf "  in_place: %b\n" config.in_place;
+  Printf.printf "  editor: %s\n" config.editor;
+  Printf.printf "  interactive: %b\n" config.interactive;
+  Printf.printf "  extra_options: [%s]\n" (String.concat "; " config.extra_options);
+  Printf.printf "  extra_drivers: [\n";
+  List.iter (fun (s, slist) ->
+    Printf.printf "    (\"%s\", [%s]);\n" s (String.concat "; " slist)
+  ) config.extra_drivers;
+  Printf.printf "  ]\n";
+  ()
+
+(* --- Printer for config_editor --- *)
+let print_config_editor (config : config_editor) : unit =
+  Printf.printf "--- Editor Configuration ---\n";
+  Printf.printf "  editor_name: %s\n" config.editor_name;
+  Printf.printf "  editor_command: %s\n" config.editor_command;
+  Printf.printf "  editor_options: [%s]\n" (String.concat "; " config.editor_options);
+  ()
+
+(* --- Printer for config_strategy --- *)
+let print_config_strategy (config : config_strategy) : unit =
+  Printf.printf "--- Strategy Configuration ---\n";
+  Printf.printf "  strategy_name: %s\n" config.strategy_name;
+  Printf.printf "  strategy_desc: %s\n" config.strategy_desc;
+  Printf.printf "  strategy_code: \"%s\"\n" config.strategy_code; (* Print code as a single string *)
+  Printf.printf "  strategy_shortcut: %s\n" config.strategy_shortcut;
+  ()
 
 let get_strategies rc =
   get_simple_family rc "strategy"
@@ -286,6 +335,21 @@ let load_plugins main =
   if main.load_default_plugins then List.iter load (plugins_auto_detection main);
   List.iter load main.plugins
 
+(* Function to print the contents of a 'main' record *)
+let print_main_config (config : main) : unit =
+  Printf.printf "Main:\n";
+  Printf.printf "  libdir: %s\n" config.libdir;
+  Printf.printf "  datadir: %s\n" config.datadir;
+  Printf.printf "  loadpath: [%s]\n" (String.concat "; " config.loadpath);
+  Printf.printf "  stdlib: %b\n" config.stdlib;
+  Printf.printf "  load_default_plugins: %b\n" config.load_default_plugins;
+  Printf.printf "  timelimit: %.2f seconds\n" config.timelimit;
+  Printf.printf "  memlimit: %d MB\n" config.memlimit;
+  Printf.printf "  running_provers_max: %d\n" config.running_provers_max;
+  Printf.printf "  plugins: [%s]\n" (String.concat ", " config.plugins);
+  Printf.printf "  default_editor: %s\n" config.default_editor;
+  () 
+
 type config = {
   conf_file : string;       (* "/home/innocent_user/.why3.conf" *)
   user_rc : Rc.t; (* from .why3.conf without extra_config *)
@@ -297,6 +361,20 @@ type config = {
   provers_upgrade_policy : prover_upgrade_policy Mprover.t;
   strategies : config_strategy Mstr.t;
 }
+
+let print_config (conf : config) : unit = 
+  Printf.printf "Config:\n";
+  Printf.printf " conf_file: %s\n" conf.conf_file;
+  (*Printf.printf " user_rc: %s\n" conf.user_rc;*)
+  Printf.printf " main: \n"; print_main_config conf.main;
+  Printf.printf " provers:\n"; print_config_prover conf.provers;
+  (*Printf.printf " prover_shortcuts: ";  print_prover conf.prover_shortcuts;
+  Printf.printf " prover_editors: %s\n" conf.prover_editors;
+  Printf.printf " editors: %s\n" conf.editors;
+  Printf.printf " provers_upgrade_policy: %s\n" conf.provers_upgrade_policy;
+  Printf.printf " strategies: %s\n" conf.strategies;*)
+  ()
+
 
 let empty_main =
   {
@@ -1161,7 +1239,7 @@ module Args = struct
     if footer <> "" then Printf.fprintf fmt "\n%s" footer;
     Printf.fprintf fmt "%!"
 
-  let all_options options header footer =
+  let all_options (options : Debug.Args.spec list) (header : string) (footer : string) =
     let options = ref (common_options @ options) in
     let help =
       let open Getopt in
@@ -1170,25 +1248,37 @@ module Args = struct
     options := help :: !options;
     !options
 
-  let complete_initialization () =
+let print_env (environment : Env.env) : unit =
+  Printf.printf "Environment:\n";
+  Printf.printf "  env_path: {";
+  (* Convert Sstr.t to a list of elements (strings) and then join them *)
+  Printf.printf "%s" (String.concat ", " (Sstr.elements environment.env_path));
+  Printf.printf "}\n";
+  Printf.printf "  env_tag: %d\n" environment.env_tag;
+  () (* Return unit *)
+
+let complete_initialization () : (config * Env.env) =
     Debug.Args.set_flags_selected ~silent:true ();
     let config = init_config ~extra_config:(!opt_extra) !opt_config in
     (* Set option if they are false *)
     let apply_not_default f o b = if !o then b else f !o b in
     let config = apply_not_default set_stdlib opt_stdlib config in
     let config = apply_not_default set_load_default_plugins opt_load_default_plugins config in
-    let main = get_main config in
-    let lp = List.rev_append !opt_loadpath (loadpath main) in
+    let main : main = get_main config in
+    let lp : string list = List.rev_append !opt_loadpath (loadpath main) in 
     let config = set_main config (set_loadpath main lp) in
     load_plugins main;
     Debug.Args.set_flags_selected ();
     Loc.Args.set_flags_selected ();
     if Debug.Args.option_list () then exit 0;
     if Loc.Args.option_list () then exit 0;
+    print_config config;
+    print_env (Env.create_env lp);
     config, Env.create_env lp
 
-  let initialize ?(extra_help="") options default usage =
+  let initialize ?(extra_help="") (options : Debug.Args.spec list) (default : string -> unit) (usage : string) =
     let options = all_options options usage extra_help in
+    (*This parses the args, follow Sys.argv*)
     Getopt.parse_all ~i:!first_arg options default Sys.argv;
     complete_initialization ()
 

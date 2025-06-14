@@ -421,6 +421,7 @@ let () =
       Format.eprintf "Error: %s@." s;
       Whyconf.Args.exit_with_usage usage_str
   in
+    print_string dir;
   Server.init_server gconfig.config env dir;
   Queue.iter
     (fun f ->

@@ -25,7 +25,10 @@ type pathname = string list (* library path *)
 
 (** Library environment *)
 
-type env
+type env = {
+    env_path : Sstr.t; 
+    env_tag  : Weakhtbl.tag;
+  }
 
 val env_tag : env -> Weakhtbl.tag
 

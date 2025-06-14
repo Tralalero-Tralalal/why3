@@ -209,7 +209,9 @@ let parse_many opts args i =
   with GetoptFailure exn ->
     handle_exn exn
 
-let parse_all ?(i = 1) opts extra args =
+let parse_all ?(i = 1) (opts : (key * handler * 'weak3) list) (extra : string -> unit) (args : string array) : unit =
+  print_string "args to parse\n";
+  Stdlib.Array.iter (fun a -> Printf.printf "%s \n" a) args;
   let nargs = Array.length args in
   let rec aux i =
     if i = nargs then ()
