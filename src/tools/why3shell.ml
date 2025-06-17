@@ -412,6 +412,12 @@ let () =
       eprintf "Error: %s@." s;
       Whyconf.Args.exit_with_usage usage_str
   in
+  Queue.iter
+    (fun f ->
+      (* Sanitize the command line arguments so that they are always absolute *)
+      let f = Sysutil.concat (Sys.getcwd ()) f in
+      send_request (Add_file_req f))
+    files;
   Server.init_server config env dir;
   Unix_scheduler.timeout ~ms:100
       (*a function that iterates over a list of notifications, applying treat_notification, returns true*) 
