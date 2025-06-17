@@ -958,11 +958,11 @@ $(WEBSERVDEP) $(WEBSERVCMO) $(WEBSERVCMX): INCLUDES += -I src/ide
 
 # build targets
 
-byte: bin/why3webserver.cma
-opt:  bin/why3webserver.cmxs
+byte: bin/why3web.cma
+opt:  bin/why3web.cmxs
 
-bin/why3webserver.cmxs: $(WEBSERVCMX)
-bin/why3webserver.cma:  $(WEBSERVCMO)
+bin/why3web.cmxs: $(WEBSERVCMX)
+bin/why3web.cma:  $(WEBSERVCMO)
 
 # depend and clean targets
 
@@ -971,13 +971,13 @@ MAKEINC += $(WEBSERVDEP)
 CLEANDIRS += src/ide
 
 uninstall-bin::
-	rm -f $(TOOLDIR)/why3webserver.$(SHAREDBEST)
+	rm -f $(TOOLDIR)/why3web.$(SHAREDBEST)
 
 install-bin::
 	$(MKDIR_P) $(TOOLDIR)
-	$(INSTALL_DATA) bin/why3webserver.$(SHAREDBEST) $(TOOLDIR)
+	$(INSTALL_DATA) bin/why3web.$(SHAREDBEST) $(TOOLDIR)
 
-install_local:: bin/why3webserver.$(SHAREDBEST)
+install_local:: bin/why3web.$(SHAREDBEST)
 
 
 ###############
@@ -1778,8 +1778,8 @@ src/ide/why3_js.js: src/ide/why3_js.byte
 
 web_ide: src/ide/why3_js.js
 
-opt: bin/why3webserver.cmxs
-byte: bin/why3webserver.cma src/ide/why3_js.cmo
+opt: bin/why3web.cmxs
+byte: bin/why3web.cma src/ide/why3_js.cmo
 
 endif
 
