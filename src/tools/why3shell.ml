@@ -371,9 +371,6 @@ let interp fmt cmd =
           | _ -> send_request (Command_req (!cur_id, cmd))
         end
   end;
-  let node = Hnode.find nodes !cur_id in
-  if node.node_type = SGoal then
-    print_goal fmt !cur_id
 
 (************************)
 (* parsing command line *)
