@@ -1056,6 +1056,41 @@ install-bin::
 
 install_local:: bin/why3shell.$(SHAREDBEST)
 
+###############
+# Why3 LSP
+###############
+
+LSP_FILES = why3lsp
+
+LSPMODULES = $(addprefix src/tools/, $(LSP_FILES))
+
+LSPDEP = $(addsuffix .dep, $(LSPMODULES))
+LSPCMO = $(addsuffix .cmo, $(LSPMODULES))
+LSPCMX = $(addsuffix .cmx, $(LSPMODULES))
+
+$(LSPDEP) $(LSPCMO) $(LSPCMX): INCLUDES += -I src/tools
+
+# build targets
+
+byte: bin/why3lsp.cma
+opt:  bin/why3lsp.cmxs
+
+bin/why3lsp.cmxs: $(LSPCMX)
+bin/why3lsp.cma:  $(LSPCMO)
+
+# depend and clean targets
+
+MAKEINC += $(LSPDEP)
+
+uninstall-bin::
+	rm -f $(TOOLDIR)/why3lsp.$(SHAREDBEST)
+
+install-bin::
+	$(MKDIR_P) $(TOOLDIR)
+	$(INSTALL_DATA) bin/why3lsp.$(SHAREDBEST) $(TOOLDIR)
+
+install_local:: bin/why3lsp.$(SHAREDBEST)
+
 ####################
 # Coq realizations
 ####################
