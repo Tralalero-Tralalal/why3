@@ -10,8 +10,8 @@ open Itp_communication
 
 module Protocol_lsp = struct 
   let debug_proto =
-    Debug.register_flag "ide_proto"
-      ~desc:"Print@ debugging@ messages@ about@ Why3Ide@ protocol@"
+    Debug.register_flag "lsp_proto"
+      ~desc:"Print@ debugging@ messages@ about@ Why3lsp@ protocol@"
 
   let print_request_debug r =
     Debug.dprintf debug_proto "[request]";
@@ -61,7 +61,6 @@ type shell_node_type =
   | STransformation
   | SGoal
   | SProofAttempt
-
 
 type node = {
   node_ID: node_ID;
